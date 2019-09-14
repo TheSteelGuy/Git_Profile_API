@@ -12,15 +12,17 @@ def send_repos_request(github_url='', bitbucket_url=''):
         github_req = requests.get(
             headers={'content-type': 'application/json', 'accept': 'Accept: application/vnd.github.v3+json'},
             url=github_url)
+    except requests.exceptions.ConnectionError:
+        return 'Check your connection and try again'
+    except:
+        pass
 
-    except Exception as e:
-        raise e
     try:
         bitbucket_req = requests.get(
             headers={'content-type': 'application/json'},
             url=bitbucket_url)
     except Exception as e:
-        raise e
+        pass
     return handle_api_response(github_req, bitbucket_req)
 
 
@@ -31,7 +33,6 @@ def handle_api_response(github_res, bitbucket_res):
     :param bitbucket_res: response from bitbucket
     :return:
     """
-    repo_types_ = repo_types(github_res, bitbucket_res)
 
     merged_result ={
         'repo_types': repo_types(github_res, bitbucket_res),
