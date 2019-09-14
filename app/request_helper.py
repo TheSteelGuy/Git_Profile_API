@@ -21,7 +21,7 @@ def send_repos_request(github_url='', bitbucket_url=''):
         bitbucket_req = requests.get(
             headers={'content-type': 'application/json'},
             url=bitbucket_url)
-    except Exception as e:
+    except:
         pass
     return handle_api_response(github_req, bitbucket_req)
 
@@ -29,9 +29,9 @@ def send_repos_request(github_url='', bitbucket_url=''):
 def handle_api_response(github_res, bitbucket_res):
     """
 
-    :param github_res: response from github
+    :param github_res: response from github and bitbucket
     :param bitbucket_res: response from bitbucket
-    :return:
+    :return: dict
     """
 
     merged_result ={
@@ -55,9 +55,10 @@ def repo_types(github_response, bitbucket_response):
 
     if github_response is not None and github_response.status_code == 200:
         github_response_json = github_response.json()
+        # since all requests to bitbucket returns 200 OK we need to check if there are any repos too
         original_repos = list(filter(lambda repo: repo['fork'] is False, github_response_json ))
         count_original_repos += len(original_repos)
-        count_forked_repos  += len(github_response_json) - count_original_repos
+        count_forked_repos += len(github_response_json) - count_original_repos
 
     if bitbucket_response is not None and bitbucket_response.status_code == 200:
         bitbucket_response_json = bitbucket_response.json()
@@ -79,14 +80,13 @@ def repo_followers(github_response, bitbucket_response):
     """
     :param github_response: response from github
     :param bitbucket_response: response from bitbucket
-    :return:
+    :return: int
     """
     total_watchers = 0
     if github_response is not None and github_response.status_code == 200:
         github_response_json = github_response.json()
         watchers = [repo['watchers_count'] for repo in github_response_json]
         total_watchers += sum(watchers)
-        print(sum(watchers))
 
     if bitbucket_response is not None and bitbucket_response.status_code == 200:
         bitbucket_response_json = bitbucket_response.json()
@@ -123,7 +123,6 @@ def language_list(github_response, bitbucket_response):
 
     if bitbucket_response is not None and bitbucket_response.status_code == 200\
             and bitbucket_response.json()['values']:
-        print('bitbucket_response.status_code.......', bitbucket_response.json())
         bitbucket_response_json = bitbucket_response.json()
         bitbucket_languages = [repo['language'] for repo in bitbucket_response_json['values'] if repo['language'] is not None]
         list_count_bitbucket_languages = {'Bitbucket':[
@@ -139,17 +138,13 @@ def repo_topics(github_response):
     :param github_response: response from github
     :return: list of repo topics from github
     """
-    repo_topics = 0
+    repo_topics_count = []
+
     try:
         if github_response is not None and github_response.status_code == 200:
             github_response_json = github_response.json()
-            repo_topics = [repo['topics'] for repo in github_response_json]
-            print('repo_topics', repo_topics)
-    except KeyError:
-        raise KeyError
-        repo_topics =  0
+            repo_topics_count[:] = [repo['topics'] for repo in github_response_json]
     except:
-        raise
+        pass
     finally:
-        print('repo_topics', repo_topics)
-        return repo_topics
+        return repo_topics_count

@@ -18,10 +18,9 @@ def health_check():
     return Response("All Good!", status=200)
 
 
-@app.route("/<organization>", methods=["GEt"])
+@app.route("/<organization>", methods=["GET"])
 def get_repos(organization):
     github_url = github_root_url+'orgs/'+organization + '/repos'
     bitbucket_url = bitbucket_root_url + 'repositories/' + organization
-    print('url.....', bitbucket_url)
     result = send_repos_request(github_url=github_url, bitbucket_url=bitbucket_url)
     return jsonify({'result': result})
