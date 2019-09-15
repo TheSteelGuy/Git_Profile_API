@@ -17,7 +17,6 @@ def send_github_request(github_url=''):
         error = 'Check your internet connection and try again, we could not send a request to Github'
     except:
         error = 'An error occurred with request to Github please try again'
-
     return github_req, error
 
 
@@ -27,7 +26,6 @@ def send_bitbucket_request(bitbucket_url=''):
     :param bitbucket_url: bitbucket url
     :return: dict
     """
-
     bitbucket_req = None
     error = None
     try:
@@ -44,7 +42,8 @@ def send_bitbucket_request(bitbucket_url=''):
 
 def handle_api_response(github_url='', bitbucket_url=''):
     """
-
+    Function responsible for handling github and bitbucket api responses
+    It also merges result from all the other functions
     :param github_url: github url
     :param bitbucket_url: bitbucket url
     :return: dict
@@ -54,6 +53,7 @@ def handle_api_response(github_url='', bitbucket_url=''):
     bitbucket_res, bitbucket_error = send_bitbucket_request(bitbucket_url)
 
     errors = [bitbucket_error, github_error]
+    # Remove None from the list in-case everything went well with with the two api calls(bitbucket and Github)
     errors[:] = [error for error in errors if error is not None]
 
     merged_result ={
@@ -68,7 +68,6 @@ def handle_api_response(github_url='', bitbucket_url=''):
 
 def repo_types(github_response, bitbucket_response):
     """
-
     :param github_response: response from github
     :param bitbucket_response: response from bitbucket
     :return: dict
@@ -115,7 +114,7 @@ def repo_followers(github_response, bitbucket_response):
         bitbucket_response_json = bitbucket_response.json()
         repo_watchers_urls = [repo['links']['watchers'] for repo in bitbucket_response_json['values']]
         repo_watchers_urls[:] = [url['href'] for url in repo_watchers_urls]
-        send_watchers_req = [requests.get(headers={'content-type': 'application/json'},url=url) for url in repo_watchers_urls]
+        send_watchers_req = [requests.get(headers={'content-type': 'application/json'}, url=url) for url in repo_watchers_urls]
         watchers = []
         for res in send_watchers_req:
             try:
@@ -135,7 +134,7 @@ def language_list(github_response, bitbucket_response):
     reports the programing lanquages use in the repos
     :param github_response: response from github
     :param bitbucket_response: response from bitbucket
-    :return:
+    :return: list
     """
     total_languages = []
     if github_response is not None and github_response.status_code == 200:
