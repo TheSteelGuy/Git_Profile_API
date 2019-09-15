@@ -36,3 +36,32 @@ merged_data = {
     "total_watchers": 1736
   }
 }
+
+languages = [
+      {
+        "Github": [
+          {
+            "c": 3
+          },
+          {
+            "python": 4
+          },
+          {
+            "ruby": 1
+          }
+        ]
+      },
+      {
+        "Bitbucket": [
+          {
+            "": 1
+          },
+          {
+            "c++": 1
+          },
+          {
+            "python": 5
+          }
+        ]
+      }
+]
