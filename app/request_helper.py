@@ -1,44 +1,67 @@
 import requests
 
 
-def send_repos_request(github_url='', bitbucket_url=''):
+def send_github_request(github_url=''):
     """
-    Sends requests to github and bitbucket
+    Sends requests to github
+    :param github_url: github url
     :return: dict
     """
     github_req = None
-    bitbucket_req = None
+    error = None
     try:
         github_req = requests.get(
             headers={'content-type': 'application/json', 'accept': 'Accept: application/vnd.github.v3+json'},
             url=github_url)
     except requests.exceptions.ConnectionError:
-        return 'Check your connection and try again'
+        error = 'Check your internet connection and try again, we could not send a request to Github'
     except:
-        pass
+        error = 'An error occurred with request to Github please try again'
 
+    return github_req, error
+
+
+def send_bitbucket_request(bitbucket_url=''):
+    """
+    Sends requests to github and bitbucket
+    :param bitbucket_url: bitbucket url
+    :return: dict
+    """
+
+    bitbucket_req = None
+    error = None
     try:
         bitbucket_req = requests.get(
             headers={'content-type': 'application/json'},
             url=bitbucket_url)
+    except requests.exceptions.ConnectionError:
+        error = 'Check your internet connection and try again, we could not send a request to Bitbucket'
     except:
-        pass
-    return handle_api_response(github_req, bitbucket_req)
+        error = 'An error occurred with request to Bitbucket please try again'
+
+    return bitbucket_req, error
 
 
-def handle_api_response(github_res, bitbucket_res):
+def handle_api_response(github_url='', bitbucket_url=''):
     """
 
-    :param github_res: response from github and bitbucket
-    :param bitbucket_res: response from bitbucket
+    :param github_url: github url
+    :param bitbucket_url: bitbucket url
     :return: dict
     """
+
+    github_res, github_error = send_github_request(github_url)
+    bitbucket_res, bitbucket_error = send_bitbucket_request(bitbucket_url)
+
+    errors = [bitbucket_error, github_error]
+    errors[:] = [error for error in errors if error is not None]
 
     merged_result ={
         'repo_types': repo_types(github_res, bitbucket_res),
         'total_watchers': repo_followers(github_res, bitbucket_res),
         'languages': language_list(github_res, bitbucket_res),
-        'topics': repo_topics(github_res)
+        'topics': repo_topics(github_res),
+        'errors': errors
     }
     return merged_result
 
@@ -48,7 +71,7 @@ def repo_types(github_response, bitbucket_response):
 
     :param github_response: response from github
     :param bitbucket_response: response from bitbucket
-    :return:
+    :return: dict
     """
     count_original_repos = 0
     count_forked_repos = 0
