@@ -28,6 +28,7 @@ $ pip install virtualenv
 create a virtualenv 
 $ virtualenv -p python3.6 venv 
 $ cd venv
+$ source bin/activate
 $ git clone https://github.com/TheSteelGuy/Git_Profile_API.git
 $ cd Git_Profile_API
 ```
