@@ -1,8 +1,12 @@
 # Coding Challenge App
 
-A skeleton flask app to use for a coding challenge.
+## Git Profile Challenge
 
 ## Install:
+
+```clone the repo
+   $ git clone https://github.com/TheSteelGuy/Git_Profile_API.git
+```
 
 You can use a virtual environment (conda, venv, etc):
 ```
@@ -14,10 +18,22 @@ Or just pip install from the requirements file
 ``` 
 pip install -r requirements.txt
 ```
+### NB I did not Use Conda(The below is what I used to Run The app)
+
+- if you don't have virtualenv install it with
+```
+$ pip install virtualenv
+```
+```
+create a virtualenv 
+$ virtualenv -p python3.6 venv 
+$ cd venv
+$ git clone https://github.com/TheSteelGuy/Git_Profile_API.git
+$ cd Git_Profile_API
+```
 
 ## Running the code
 
-### Spin up the service
 
 ```
 # start up local server
@@ -36,7 +52,11 @@ send a GET request
 GET http://127.0.0.1:5000/<organization>
 eg GET http://127.0.0.1:5000/pygame
 ```
+## Running tests
 
+```simply on the root of the application(Git_Profile_API directory)
+   $ pytest
+ ```
 
 ## Typical successful Request  
 ```
@@ -98,8 +118,9 @@ eg GET http://127.0.0.1:5000/pygame
 
 ## What'd I'd like to improve on...
 - Current implementation sends single request at atime for all the urls to the bitbucket
-watchers endpoint. This I can improve on by using asyn libraries such as iohttp.
-- Writing unit tests to for various cases
+watchers endpoint. This I can improve on by using async libraries such as iohttp.
+- Writing unit more test cases 
 - Refactor the code especially request_helper.py there are some repeated operations
+
 
 
