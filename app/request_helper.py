@@ -1,4 +1,7 @@
 import requests
+import aiohttp
+import ssl
+import asyncio
 
 
 def send_github_request(github_url=''):
@@ -10,6 +13,7 @@ def send_github_request(github_url=''):
     github_req = None
     error = None
     try:
+        # the documentations uses v3 by default but they advice that you explicitly specify the version as such
         github_req = requests.get(
             headers={'content-type': 'application/json', 'accept': 'Accept: application/vnd.github.v3+json'},
             url=github_url)
@@ -22,7 +26,7 @@ def send_github_request(github_url=''):
 
 def send_bitbucket_request(bitbucket_url=''):
     """
-    Sends requests to github and bitbucket
+    Sends requests to bitbucket
     :param bitbucket_url: bitbucket url
     :return: dict
     """
@@ -49,6 +53,7 @@ def handle_api_response(github_url='', bitbucket_url=''):
     :return: dict
     """
 
+    # call the functions to get responses from github and bitbucket
     github_res, github_error = send_github_request(github_url)
     bitbucket_res, bitbucket_error = send_bitbucket_request(bitbucket_url)
 
@@ -56,7 +61,7 @@ def handle_api_response(github_url='', bitbucket_url=''):
     # Remove None from the list in-case everything went well with with the two api calls(bitbucket and Github)
     errors[:] = [error for error in errors if error is not None]
 
-    merged_result ={
+    merged_result = {
         'repo_types': repo_types(github_res, bitbucket_res),
         'total_watchers': repo_followers(github_res, bitbucket_res),
         'languages': language_list(github_res, bitbucket_res),
@@ -75,15 +80,16 @@ def repo_types(github_response, bitbucket_response):
     count_original_repos = 0
     count_forked_repos = 0
 
+    # check if the response was a success before any further processing
     if github_response is not None and github_response.status_code == 200:
         github_response_json = github_response.json()
-        # since all requests to bitbucket returns 200 OK we need to check if there are any repos too
-        original_repos = list(filter(lambda repo: repo['fork'] is False, github_response_json ))
+        # filter repos with key fork as false, they are original repos
+        original_repos = list(filter(lambda repo: repo['fork'] is False, github_response_json))
         count_original_repos += len(original_repos)
         count_forked_repos += len(github_response_json) - count_original_repos
-
     if bitbucket_response is not None and bitbucket_response.status_code == 200:
         bitbucket_response_json = bitbucket_response.json()
+        # size gives the total repos
         total_repos = bitbucket_response_json['size']
         try:
             # filter to find repos which are forked
@@ -110,16 +116,23 @@ def repo_followers(github_response, bitbucket_response):
         watchers = [repo['watchers_count'] for repo in github_response_json]
         total_watchers += sum(watchers)
 
-    if bitbucket_response is not None and bitbucket_response.status_code == 200:
+    if bitbucket_response is not None and bitbucket_response.status_code == 200 \
+        and bitbucket_response.json()['values']:
+        # since all requests to bitbucket returns 200 OK we need to check if there are any repos too
         bitbucket_response_json = bitbucket_response.json()
         repo_watchers_urls = [repo['links']['watchers'] for repo in bitbucket_response_json['values']]
         repo_watchers_urls[:] = [url['href'] for url in repo_watchers_urls]
-        send_watchers_req = [requests.get(headers={'content-type': 'application/json'}, url=url) for url in repo_watchers_urls]
         watchers = []
+        # start an event loop which runs till we get back the watchers
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        urls = repo_watchers_urls
+        send_watchers_req = loop.run_until_complete(bitbucket_watchers(urls, loop))
         for res in send_watchers_req:
             try:
                 if res.status_code == 200:
                     res_json = res.json()
+                    # size is the key for watchers
                     watchers.append(res_json['size'])
             except:
                 continue
@@ -170,3 +183,34 @@ def repo_topics(github_response):
         pass
     finally:
         return repo_topics_count
+
+
+async def bitbucket_watcher(session, url):
+    """
+    an async method called to to use sessions to get data about a single url
+    :param session: aiohttp ClientSession
+    :param url: single watcher url
+    :return:
+    """
+    async with session.get(url, ssl=ssl.SSLContext()) as response:
+        print('response.json()', response.json())
+        return await response.json()
+
+
+async def bitbucket_watchers(urls, loop):
+    """
+    since each repo in bitbucket gives urls for the repo watchers
+    we have to find an efficient ways to make calls to these urls
+    :param urls: list of watcher urls
+    :param loop: event loop
+    :return: list of watchers
+    """
+    # Aiohttp recommends to use ClientSession as primary interface to make requests.
+    # ClientSession allows you to store cookies between requests
+    # and keeps objects that are common for all requests (event loop, connection and other things).
+    async with aiohttp.ClientSession(loop=loop) as session:
+        results = await asyncio.gather(*[bitbucket_watcher(session, url) for url in urls], return_exceptions=True)
+        return results
+
+
+
