@@ -119,7 +119,7 @@ eg GET http://127.0.0.1:5000/pygame
 
 ## What'd I'd like to improve on...
 - Current implementation sends single request at atime for all the urls to the bitbucket
-watchers endpoint. This I can improve on by using async libraries such as iohttp.
+watchers endpoint. This I can improve on by finding ways to to send these requests at once if possible
 - Writing unit more test cases 
 - Refactor the code especially request_helper.py there are some repeated operations
 
