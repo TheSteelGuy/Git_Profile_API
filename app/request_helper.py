@@ -190,10 +190,9 @@ async def bitbucket_watcher(session, url):
     an async method called to to use sessions to get data about a single url
     :param session: aiohttp ClientSession
     :param url: single watcher url
-    :return:
+    :return: courotine
     """
     async with session.get(url, ssl=ssl.SSLContext()) as response:
-        print('response.json()', response.json())
         return await response.json()
 
 
